@@ -1,0 +1,596 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>新能源汽车充电记录系统</title>
+  <!--    <link rel="icon" href="https://www.saicmg.com/wp-content/uploads/2022/09/cropped-logo-mg-150x150.png" sizes="32x32" />-->
+  <!-- <script src="./vconsole.min.js"></script>
+  <script>
+    // VConsole 默认会挂载到 `window.VConsole` 上
+    var vConsole = new window.VConsole();
+  </script> -->
+  <!--<link rel="stylesheet" href="./all.min.css">-->
+  <link rel="stylesheet" href="./all.min.css">
+  <!--        <script src="https://cdn.tailwindcss.com"></script>-->
+  <script src="./tailwindcss.min.js"></script>
+  <script src="./chart.js"></script>
+  <!-- <script src="./chart.umd.min.js"></script> -->
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    /* 适用于整个应用或特定头部容器 */
+body {
+  /* 添加顶部安全区域内边距 */
+  padding-top: env(safe-area-inset-top, 0px);
+
+  /* 确保视口覆盖整个屏幕，包括刘海屏区域 */
+  min-height: 100dvh;
+}
+
+    /* Deep-color visual theme. */
+    :root {
+      color-scheme: dark;
+      --page-bg: #0b1220;
+      --page-accent: #132038;
+      --surface: #161f2e;
+      --surface-raised: #1d2939;
+      --surface-hover: #25364c;
+      --border: #334155;
+      --text: #e5edf8;
+      --muted: #9bacc3;
+    }
+
+    body {
+      color: var(--text);
+      background: linear-gradient(135deg, var(--page-bg), var(--page-accent)) !important;
+    }
+
+    nav.bg-white,
+    section.bg-white,
+    section.grid > div.bg-white,
+    #importModal > div.bg-white,
+    tbody.bg-white {
+      background-color: var(--surface) !important;
+    }
+
+    nav {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
+    }
+
+    .shadow-md,
+    .shadow-lg {
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26) !important;
+    }
+
+    .text-gray-800,
+    .text-gray-700 {
+      color: var(--text) !important;
+    }
+
+    .text-gray-500,
+    .text-gray-600 {
+      color: var(--muted) !important;
+    }
+
+    .border-gray-200,
+    .border-gray-300,
+    .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+      border-color: var(--border) !important;
+    }
+
+    thead.bg-gray-50 {
+      background-color: var(--surface-raised) !important;
+    }
+
+    .hover\:bg-blue-50:hover,
+    .hover\:bg-gray-100:hover {
+      background-color: var(--surface-hover) !important;
+    }
+
+    .bg-blue-100 { background-color: #183250 !important; }
+    .bg-green-100 { background-color: #173c35 !important; }
+    .bg-purple-100 { background-color: #352755 !important; }
+    .bg-yellow-100 { background-color: #4b3a17 !important; }
+
+    input,
+    textarea {
+      color: var(--text) !important;
+      background-color: #0f1724 !important;
+      border-color: var(--border) !important;
+      color-scheme: dark;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #71829b;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18) !important;
+    }
+
+    #importModal {
+      background-color: rgba(2, 6, 23, 0.74) !important;
+      backdrop-filter: blur(4px);
+    }
+
+    #costChart {
+      filter: invert(1) hue-rotate(180deg);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen">
+<!-- 导航栏 -->
+<nav class="bg-white shadow-md py-4 px-6 flex flex-col sm:flex-row justify-between items-center sticky ">
+  <h1 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+    <i class="fas fa-car-battery text-green-600 mr-2"></i>新能源汽车充电记录系统
+  </h1>
+  <div class="flex flex-wrap justify-between items-center mb-4">
+    <button id="addRecordBtn" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition duration-300 transform hover:-translate-y-0.5 flex items-center">
+      <i class="fas fa-plus mr-1"></i>新增
+    </button>
+    <!--  </div>
+     <div class="flex flex-wrap gap-2 mt-2 md:mt-0"> -->
+    <button style="margin-left: 10px;margin-right: 10px;" id="exportClipboardBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 flex items-center">
+      <i class="fas fa-copy mr-2"></i> 导出
+    </button>
+    <button id="importClipboardBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 flex items-center">
+      <i class="fas fa-paste mr-2"></i> 导入
+    </button>
+  </div>
+</nav>
+
+<main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 ">
+  <!-- 剪贴板导入模态框 -->
+  <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-11/12 max-w-md">
+      <h3 class="text-lg font-semibold mb-4">从剪贴板导入数据</h3>
+      <textarea id="importData" placeholder="在此粘贴您的充电记录数据..." class="w-full h-40 p-2 border rounded-md"></textarea>
+      <div class="flex justify-end space-x-2 mt-4">
+        <button id="cancelImport" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">取消</button>
+        <button id="confirmImport" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">导入</button>
+      </div>
+    </div>
+  </div>
+  <!-- 数据录入区 -->
+  <section id="recordFormSection" class="hidden bg-white rounded-xl shadow-lg p-6 mb-8 fade-in flex top-0 sticky">
+
+    <form id="chargeRecordForm" class="space-y-4" style="margin:auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">累计行驶里程(km)</span>
+          <input type="number" step="any" id="totalMileageInput" required placeholder="请输入累计里程..."
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none"/>
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">充电百分比(%)</span>
+          <input type="number" min="0" max="100" step="any" id="percentageInput" required placeholder="例如90%"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none"/>
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">剩余充电百分比(%)</span>
+          <input type="number" min="0" max="100" step="any" id="unchargePercentageInput" value="0" required placeholder="例如90%"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none"/>
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">充电费用(RMB)</span>
+          <input type="number" step="any" id="costInput" required placeholder="请输入金额..."
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none"/>
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">每度电单价(RMB)</span>
+          <input type="number" step="any" id="unitPriceInput" required placeholder="例如1.5元/度"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none"/>
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">充电用时(m)</span>
+          <input type="number" step="any" id="timeInput" required placeholder="例如120分钟"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none"/>
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">充电度数(km/h)</span>
+          <input type="number" step="any" id="lightInput" required placeholder="例如38度电"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none"/>
+        </label>
+      </div>
+      <div class="flex justify-end mt-4">
+        <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition duration-300 flex items-center">
+          <i class="fas fa-save mr-1"></i>保存记录
+        </button>
+        <button type="button" onclick="document.getElementById('recordFormSection').classList.add('hidden')"
+                class="ml-3 px-5 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition duration-300">
+          取消
+        </button>
+      </div>
+    </form>
+  </section>
+  <!-- 统计卡片 -->
+  <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white rounded-xl shadow-md p-5 flex items-center">
+      <div class="rounded-full bg-blue-100 p-3 mr-4">
+        <i class="fas fa-road text-blue-500 text-xl"></i>
+      </div>
+      <div>
+        <p class="text-gray-500 text-sm">总行驶里程</p>
+        <p id="totalMileage" class="text-2xl font-bold">0 km</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-md p-5 flex items-center">
+      <div class="rounded-full bg-green-100 p-3 mr-4">
+        <i class="fas fa-gas-pump text-green-500 text-xl"></i>
+      </div>
+      <div>
+        <p class="text-gray-500 text-sm">总充电费用</p>
+        <p id="totalCost" class="text-2xl font-bold">0 元</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-md p-5 flex items-center">
+      <div class="rounded-full bg-purple-100 p-3 mr-4">
+        <i class="fas fa-chart-line text-purple-500 text-xl"></i>
+      </div>
+      <div>
+        <p class="text-gray-500 text-sm">平均每公里费用</p>
+        <p id="avgKmCost" class="text-2xl font-bold">0 元</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-md p-5 flex items-center">
+      <div class="rounded-full bg-yellow-100 p-3 mr-4">
+        <i class="fas fa-bolt text-yellow-500 text-xl"></i>
+      </div>
+      <div>
+        <p class="text-gray-500 text-sm">记录总数</p>
+        <p id="recordCount" class="text-2xl font-bold">0 条</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 图表区域 -->
+  <section class="bg-white rounded-xl shadow-lg p-6 text-purple-500">
+    <h2 class="text-lg md:text-xl font-semibold mb-4 text-gray-700 flex items-center">
+      <i class="fas fa-chart-bar mr-2">费用趋势分析</i>
+    </h2>
+    <canvas id="costChart" height="400"></canvas>
+  </section>
+
+
+  <!-- 显示历史记录 -->
+  <section class="bg-white rounded-xl shadow-lg overflow-hidden text-purple-500">
+    <header class="border-b border-gray-200 px-6 py-4">
+      <h2 class="text-lg md:text-xl font-semibold text-gray-700 flex items-center">
+        <i class="fas fa-history mr-2"></i>充电记录列表
+      </h2>
+    </header>
+    <div class="overflow-x-auto">
+      <table id="recordsTable" class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">记录时间</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">累计里程(km)</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">本次里程(km)</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">充电比例(%)</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">充电费用(RMB)</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电费单价(RMB)</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">每公里费用<br/>(RMB/km)</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">百公里电耗</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">充电用时<br/>(分钟)</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">充电度数<br/>(km/h)</th>
+        </tr>
+        </thead>
+        <tbody id="recordsBody" class="bg-white divide-y divide-gray-200 text-sm md:text-base">
+        <!-- 动态插入记录 -->
+        </tbody>
+      </table>
+    </div>
+    <footer class="px-6 py-4 text-center text-sm text-gray-500 italic hidden" id="emptyTip">
+      当前暂无任何充电记录，请点击上方按钮开始添加！
+    </footer>
+  </section>
+</main>
+<!-- <script src="https://cdn.tailwindcss.com"></script> -->
+
+
+<script>
+
+
+  let records = JSON.parse(localStorage.getItem("charging_records")) || [];
+  const formSection = document.getElementById("recordFormSection");
+  const addRecordBtn = document.getElementById("addRecordBtn");
+  let costChart = null;
+
+  // 页面加载完成后初始化展示
+  window.onload = function () {
+      renderRecords();
+      updateStats();
+      initChart();
+
+      const exportClipboardBtn = document.getElementById('exportClipboardBtn');
+const importClipboardBtn = document.getElementById('importClipboardBtn');
+const cancelImport = document.getElementById('cancelImport');
+const confirmImport = document.getElementById('confirmImport');
+const importModal = document.getElementById('importModal');
+
+exportClipboardBtn.addEventListener('click', exportToClipboard);
+importClipboardBtn.addEventListener('click', showImportModal);
+cancelImport.addEventListener('click', hideImportModal);
+confirmImport.addEventListener('click', importFromClipboard);
+  };
+
+  // 打开表单
+  addRecordBtn.addEventListener("click", () => {
+      formSection.classList.remove("hidden");
+  });
+
+  // 表单提交事件监听
+  document.getElementById("chargeRecordForm").addEventListener("submit", function(e){
+      e.preventDefault();
+
+      let totalMileage = parseFloat(document.getElementById("totalMileageInput").value);
+      const percentage = parseFloat(document.getElementById("percentageInput").value);
+      const unchargePercentage = parseFloat(document.getElementById("unchargePercentageInput").value || 0);
+      const cost = parseFloat(document.getElementById("costInput").value);
+      const unitPrice = parseFloat(document.getElementById("unitPriceInput").value);
+      const time = parseFloat(document.getElementById("timeInput").value);
+      const light = parseFloat(document.getElementById("lightInput").value);
+      if(isNaN(totalMileage) || isNaN(percentage) || isNaN(cost) || isNaN(unitPrice)|| isNaN(time)|| isNaN(light)) return;
+
+      const realTotalMileage = totalMileage;
+
+      // 计算本次行驶里程（如果有的话）
+      let mileage = 0;
+      if(records.length > 0) {
+          // 每次充电实际上应该算成上一次的费用
+          let last = records[records.length - 1];
+
+          // 每次的总里程只使用实际充电的部分 ，
+          mileage = parseInt((totalMileage - last.total_mileage) * (1 - unchargePercentage / ((percentage + unchargePercentage))));
+          totalMileage = mileage + last.total_mileage;
+          last.mileage = mileage;
+          last.cost = cost;
+          last.km_cost = (cost /  mileage ).toFixed(4);
+          last.percentage = percentage;
+          last.unit_price = unitPrice;
+          last.unchargePercentage = unchargePercentage;
+          last.time = time;
+          last.light = light;
+      } else {
+          mileage = totalMileage;
+      }
+
+      // 防止里程为负数
+      if(mileage < 0) {
+          alert("累计行驶里程不能小于上次记录！");
+          return;
+      }
+
+      const kmCost = mileage > 0 ? (cost / mileage) : 0;
+
+      const newRecord = {
+          id: Date.now(),
+          date: new Date().toLocaleString(),
+          total_mileage: totalMileage,
+          realTotalMileage: realTotalMileage,
+          mileage: '-',
+          percentage: '-',
+          unchargePercentage: unchargePercentage,
+          cost: '-',
+          unit_price: '-',
+          km_cost: '-',
+          time:'-',
+          light:'-',
+      };
+
+      records.push(newRecord);
+      saveToLocalStorage();
+      renderRecords();
+      updateStats();
+      updateChart();
+      this.reset(); // 清空输入框
+      formSection.classList.add("hidden"); // 隐藏表单
+  });
+
+  // 存储至本地存储
+  function saveToLocalStorage(){
+      localStorage.setItem("charging_records", JSON.stringify(records));
+  }
+
+  // 更新统计信息
+  function updateStats() {
+      const totalMileage = records.length > 0 ? records[records.length - 1].total_mileage : 0;
+      const totalCost = records.filter((v)=>v.cost!="-").reduce((sum, record) => sum + record.cost, 0);
+      const totalMileageDriven = records.filter((v)=>v.cost!="-").reduce((sum, record) => sum + record.mileage, 0) ;
+      const avgKmCost = totalMileageDriven > 0 ? (totalCost / totalMileageDriven).toFixed(4) : "0.0000";
+
+      document.getElementById("totalMileage").textContent = totalMileageDriven + " km";
+      document.getElementById("totalCost").textContent = totalCost.toFixed(2) + " 元";
+      document.getElementById("avgKmCost").textContent = avgKmCost + " 元";
+      document.getElementById("recordCount").textContent = records.length + " 条";
+  }
+
+  // 初始化图表
+  function initChart() {
+      const ctx = document.getElementById('costChart').getContext('2d');
+      costChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels: [],
+              datasets: [{
+                  label: '每公里费用 (元/km)',
+                  data: [],
+                  borderColor: 'rgb(75, 192, 192)',
+                  backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                  tension: 0.1
+              }]
+          },
+          options: {
+              responsive: true,
+              scales: {
+                  y: {
+                      beginAtZero: true,
+                   //   max:0.2,
+                      ticks:{
+                     //   stepSize: 0.002,
+                      },
+                      title: {
+                          display: true,
+                          text: '费用 (元/km)'
+                      }
+                  },
+                  x: {
+                      title: {
+                          display: true,
+                          text: '记录时间'
+                      }
+                  }
+              }
+          }
+      });
+      updateChart();
+  }
+
+  // 更新图表数据
+  function updateChart() {
+      if (!costChart) return;
+
+      // 取最近10条记录
+      const recentRecords = [...records].reverse().slice(1, 11).reverse();
+      const labels = recentRecords.map(record => record.date.split(' ')[0]);
+      const data = recentRecords.map(record => parseFloat(record.km_cost));
+
+      costChart.data.labels = labels;
+      console.log('y',data);
+      costChart.data.datasets[0].data = data;
+      costChart.update();
+  }
+
+  // 渲染表格数据
+  function renderRecords(){
+      const tbody = document.getElementById("recordsBody");
+      const emptyTip = document.getElementById("emptyTip");
+      tbody.innerHTML = "";
+
+      if(records.length === 0){
+          emptyTip.classList.remove("hidden");
+          return;
+      } else {
+          emptyTip.classList.add("hidden");
+      }
+
+      for(let i = records.length - 1; i >=0; i--){
+          const record = records[i];
+          const row = document.createElement("tr");
+          row.className = "hover:bg-blue-50";
+          var t = record.mileage ==='-'?'-':( record.light / record.mileage * 100).toFixed();
+
+          row.innerHTML = `
+              <td class="px-6 py-4 whitespace-nowrap">${record.date}</td>
+              <td class="px-6 py-4 whitespace-nowrap">${record.total_mileage}</td>
+              <td class="px-6 py-4 whitespace-nowrap">${record.mileage}</td>
+              <td class="px-6 py-4 whitespace-nowrap">${record.percentage}%</td>
+              <td class="px-6 py-4 whitespace-nowrap">${record.cost} 元</td>
+              <td class="px-6 py-4 whitespace-nowrap">${record.unit_price} 元</td>
+              <td class="px-6 py-4 whitespace-nowrap">${record.km_cost} 元/km</td>
+              <td class="px-6 py-4 whitespace-nowrap">${t} 度/100km</td>
+              <td class="px-6 py-4 whitespace-nowrap">${record.time} 分钟</td>
+              <td class="px-6 py-4 whitespace-nowrap">${record.light} 度</td>`;
+
+          tbody.appendChild(row);
+      }
+  }
+
+  // 导出记录到剪贴板
+  function exportToClipboard() {
+      let chargeRecords = JSON.parse(localStorage.getItem("charging_records")) || []
+    if (chargeRecords.length === 0) {
+      showMessage("没有可导出的记录", "warning");
+      return;
+    }
+
+    const dataStr = JSON.stringify(chargeRecords, null, 2);
+
+
+  let clip = window.__TAURI__.clipboardManager;
+  let t ;
+  if (clip && clip.writeText){
+    t = clip.writeText(dataStr);
+  }else{
+    t= navigator.clipboard.writeText(dataStr);
+ }
+ t.then(() => {
+      showMessage("记录已复制到剪贴板！", "success");
+    }).catch(err => {
+      showMessage("复制失败：" + err, "error");
+      showImportModal();
+      document.getElementById('importData').value = dataStr;
+
+    });
+
+}
+
+// 显示导入模态框
+function showImportModal() {
+document.getElementById('importModal').classList.remove('hidden');
+document.getElementById('importData').value = '';
+}
+
+// 隐藏导入模态框
+function hideImportModal() {
+document.getElementById('importModal').classList.add('hidden');
+}
+
+// 从剪贴板导入记录
+function importFromClipboard() {
+const dataStr = document.getElementById('importData').value.trim();
+
+if (!dataStr) {
+showMessage("请输入要导入的数据", "warning");
+return;
+}
+
+try {
+const importedRecords = JSON.parse(dataStr);
+if (Array.isArray(importedRecords)) {
+records = importedRecords;
+saveToLocalStorage();
+renderRecords();
+updateStats();
+      updateChart();
+hideImportModal();
+showMessage("记录导入成功", "success");
+} else {
+showMessage("数据格式不正确，请确保是有效的JSON数组", "error");
+}
+} catch (error) {
+showMessage("导入失败：" + error.message, "error");
+}
+}
+
+// 显示消息通知
+function showMessage(message, type) {
+// 移除现有的消息
+const existingMsg = document.querySelector('.notification-message');
+if (existingMsg) existingMsg.remove();
+
+// 创建新的消息元素
+const msgEl = document.createElement('div');
+msgEl.className = `notification-message fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg text-white z-50 fade-in ${
+type === 'success' ? 'bg-green-500' :
+type === 'error' ? 'bg-red-500' :
+type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+}`;
+msgEl.textContent = message;
+
+document.body.appendChild(msgEl);
+
+// 3秒后自动移除
+setTimeout(() => {
+msgEl.remove();
+}, 3000);
+}
+</script>
+
+</body>
+</html>

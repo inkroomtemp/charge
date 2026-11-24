@@ -1,0 +1,127 @@
+model_provider = "packycode"
+model_reasoning_effort = "medium"
+network_access = "enabled"
+disable_response_storage = true
+windows_wsl_setup_acknowledged = true
+model_verbosity = "high"
+
+notify = ["/Users/inkbox/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+model = "gpt-5.6-terra"
+
+[model_providers.packycode]
+name = "packycode"
+base_url = "https://www.packyapi.com/v1"
+wire_api = "responses"
+requires_openai_auth = true
+
+[projects."/Users/inkbox/project/m3u8-dl"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/hp"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/Downloads/shipping-excel-to-csv"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/amazon-backend"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/Documents/Codex/2026-06-11/1"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/Documents/Codex/2026-06-11/codex"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/Documents/Codex/2026-06-11/chrome-plugin-chrome-openai-bundled"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/Documents/Codex/2026-06-11/plugin-browser-openai-bundled-test-my"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/aurora"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/data"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/api_backend"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/clip"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/tar-charge/charge-v"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/mkv"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/tar-charge/mkv"]
+trust_level = "trusted"
+
+[projects."/Users/inkbox/project/src"]
+trust_level = "trusted"
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+"gpt-5.6-sol" = 4
+
+[marketplaces.openai-bundled]
+last_updated = "2026-06-11T03:57:22Z"
+source_type = "local"
+source = "/Users/inkbox/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-06-11T03:54:18Z"
+source_type = "local"
+source = "/Users/inkbox/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[marketplaces.local-canva]
+last_updated = "2026-07-15T09:19:29Z"
+source_type = "local"
+source = "/Users/inkbox/.codex/plugins/local-marketplaces/canva"
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."chrome@openai-bundled"]
+enabled = true
+
+[plugins."canva@local-canva"]
+enabled = true
+
+[features]
+js_repl = false
+
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = "/Applications/Codex.app/Contents/Resources/cua_node/lib/node_modules"
+NODE_REPL_NODE_PATH = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/inkbox/.codex"
+CODEX_HOME = "/Users/inkbox/.codex"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "72614174f4dad67a58d46a3ac759cffb45c92fa48a293af4c4ea35102ba391ba"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+BROWSER_USE_CODEX_APP_VERSION = "26.608.12217"
+CODEX_CLI_PATH = "/Applications/Codex.app/Contents/Resources/codex"
+
+[desktop]
+conversationDetailMode = "STEPS_COMMANDS"
+ambient-suggestions-enabled = false
+localeOverride = "zh-CN"
